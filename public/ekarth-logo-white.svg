@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 70" width="320" height="70">
+  <defs>
+    <linearGradient id="treeGradWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80" />
+      <stop offset="100%" stop-color="#22C55E" />
+    </linearGradient>
+    <linearGradient id="sunGradWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Emblem: Tree of Learning & Nurturing -->
+  <g transform="translate(6, 5)">
+    <!-- Sun / Radiance of Hope -->
+    <circle cx="28" cy="18" r="14" fill="url(#sunGradWhite)" opacity="0.95" />
+    
+    <!-- Tree Foliage / Supporting Hands -->
+    <path d="M28 8 C20 8 13 14 13 22 C13 25 15 28 17 30 C12 32 8 38 8 44 C8 51 14 56 22 56 L34 56 C42 56 48 51 48 44 C48 38 44 32 39 30 C41 28 43 25 43 22 C43 14 36 8 28 8 Z" fill="url(#treeGradWhite)" />
+    
+    <!-- Child Reaching / Tree Trunk -->
+    <circle cx="28" cy="31" r="3.5" fill="#162B1B" />
+    <path d="M28 35 C25 35 23 37 23 40 L23 48 C23 49 24 50 25 50 L27 50 L27 57 L29 57 L29 50 L31 50 C32 50 33 49 33 48 L33 40 C33 37 31 35 28 35 Z" fill="#162B1B" />
+    <path d="M23 40 C20 37 17 38 15 41" stroke="#162B1B" stroke-width="2" stroke-linecap="round" fill="none" />
+    <path d="M33 40 C36 37 39 38 41 41" stroke="#162B1B" stroke-width="2" stroke-linecap="round" fill="none" />
+  </g>
+  
+  <!-- Typography -->
+  <g transform="translate(68, 12)">
+    <text x="0" y="24" font-family="'Manrope', 'Outfit', sans-serif" font-weight="800" font-size="22" letter-spacing="1.5" fill="#FFFFFF">
+      EKARTH
+    </text>
+    <text x="96" y="24" font-family="'Manrope', 'Outfit', sans-serif" font-weight="400" font-size="22" letter-spacing="1" fill="#EDFFAA">
+      FOUNDATION
+    </text>
+    <text x="1" y="40" font-family="'Manrope', sans-serif" font-weight="600" font-size="8.5" letter-spacing="2.2" fill="#FBBF24">
+      EMPOWER • EDUCATE • ELEVATE
+    </text>
+  </g>
+</svg>
