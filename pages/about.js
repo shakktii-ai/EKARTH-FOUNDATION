@@ -97,38 +97,6 @@ function About() {
               <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-10 bg-white/40 flex flex-col justify-between">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-2xl font-normal text-gray-900 mb-2">
-                      Punit Joshi
-                    </h3>
-                    <p className="text-sm font-medium text-green-900 uppercase tracking-wider">
-                      Director, Ekarth Foundation
-                    </p>
-                  </div>
-
-                  <p className="text-base sm:text-lg font-light leading-relaxed text-gray-800">
-                    "Education is one of the most powerful tools for transforming lives, yet for many children, financial hardship continues to stand between them and their aspirations."
-                  </p>
-
-                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
-                    "At Ekarth Foundation, our deepest resolve is to ensure that no child is denied the opportunity to learn, grow and succeed because of economic circumstances. Through targeted scholarship support and educational assistance, we help students remain connected to their studies and continue building a brighter future."
-                  </p>
-
-                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
-                    "We believe that education creates lasting change. Every student who remains in school gains not only knowledge, but also confidence, opportunity and the ability to shape a better life for themselves and their families."
-                  </p>
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-gray-900/20">
-                  <p className="italic font-light text-gray-900 text-sm">
-                    — Punit Joshi, Director
-                  </p>
-                </div>
-              </div>
-
-              {/* Right: Visionary Guidance & Inspiration */}
-              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-10 bg-white/40 flex flex-col justify-between">
-                <div className="space-y-6">
-                  <div>
                     <span className="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold tracking-wider uppercase mb-3">
                       Foundation Inspiration
                     </span>
@@ -161,6 +129,40 @@ function About() {
                   </p>
                 </div>
               </div>
+
+              {/* Right: Visionary Guidance & Inspiration */}
+               <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-10 bg-white/40 flex flex-col justify-between">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-normal text-gray-900 mb-2">
+                      Punit Joshi
+                    </h3>
+                    <p className="text-sm font-medium text-green-900 uppercase tracking-wider">
+                      Director, Ekarth Foundation
+                    </p>
+                  </div>
+
+                  <p className="text-base sm:text-lg font-light leading-relaxed text-gray-800">
+                    "Education is one of the most powerful tools for transforming lives, yet for many children, financial hardship continues to stand between them and their aspirations."
+                  </p>
+
+                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    "At Ekarth Foundation, our deepest resolve is to ensure that no child is denied the opportunity to learn, grow and succeed because of economic circumstances. Through targeted scholarship support and educational assistance, we help students remain connected to their studies and continue building a brighter future."
+                  </p>
+
+                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    "We believe that education creates lasting change. Every student who remains in school gains not only knowledge, but also confidence, opportunity and the ability to shape a better life for themselves and their families."
+                  </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-gray-900/20">
+                  <p className="italic font-light text-gray-900 text-sm">
+                    — Punit Joshi, Director
+                  </p>
+                </div>
+              </div>
+
+             
             </div>
           </div>
 
