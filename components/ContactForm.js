@@ -80,7 +80,7 @@ export default function ContactForm() {
     } catch (error) {
       setStatus({ 
         type: 'error', 
-        message: error.message || 'Failed to send message. Please reach us directly at ekarthfoundation@gmail.com.' 
+        message: error.message || 'Failed to send message. Please reach us directly at info@ekarth.org.' 
       });
     } finally {
       setIsSubmitting(false);
@@ -114,7 +114,7 @@ export default function ContactForm() {
                 <Phone size={16} /> Call Us: 99228 99786
               </a>
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:info@ekarth.org"
                 className="inline-flex items-center gap-2 border border-[#E3F1C3]/40 text-[#E3F1C3] px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm hover:border-[#E3F1C3] transition"
               >
                 <Mail size={16} /> Email Us
@@ -161,7 +161,10 @@ export default function ContactForm() {
                   <strong className="text-[#E3F1C3]">Phones:</strong> +91 99228 99786 / +91 92255 77889
                 </p>
                 <p className="text-xs sm:text-sm text-gray-200 font-light">
-                  <strong className="text-[#E3F1C3]">Email:</strong> ekarthfoundation@gmail.com
+                  <strong className="text-[#E3F1C3]">Inquiries:</strong> info@ekarth.org
+                </p>
+                <p className="text-xs sm:text-sm text-gray-200 font-light">
+                  <strong className="text-[#E3F1C3]">Donations:</strong> donate@ekarth.org
                 </p>
               </div>
             </div>

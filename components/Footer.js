@@ -47,8 +47,13 @@ export default function Footer() {
               </p>
               <div className="pt-2 space-y-1">
                 <p>
-                  <a href="mailto:ekarthfoundation@gmail.com" className="hover:text-[#d4e89e] transition-colors">
-                    📧 ekarthfoundation@gmail.com
+                  <a href="mailto:info@ekarth.org" className="hover:text-[#d4e89e] transition-colors">
+                    📧 info@ekarth.org
+                  </a>
+                </p>
+                <p>
+                  <a href="mailto:donate@ekarth.org" className="hover:text-[#d4e89e] transition-colors">
+                    📧 donate@ekarth.org
                   </a>
                 </p>
                 <p>

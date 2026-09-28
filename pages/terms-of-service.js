@@ -140,10 +140,17 @@ export default function TermsOfService() {
             <p className="mt-4 text-gray-700">
               📧{" "}
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:info@ekarth.org"
                 className="text-blue-600 hover:underline"
               >
-                ekarthfoundation@gmail.com
+                info@ekarth.org
+              </a>{" "}
+              /{" "}
+              <a
+                href="mailto:donate@ekarth.org"
+                className="text-blue-600 hover:underline"
+              >
+                donate@ekarth.org
               </a>{" "}
               | 📞{" "}
               <a

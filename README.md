@@ -25,7 +25,7 @@ Ekarth Foundation is a Section 8 non-profit organization (CIN: `U88900PN2025NPL2
 - **Corporate Office**: Shop No. 36/11, Sant Dnyaneshwar Nagar, Near Karnataka School, Zudlo Erandwane, Pune
 - **Director**: Punit Joshi
 - **Phone**: `+91 99228 99786` / `+91 92255 77889`
-- **Email**: `ekarthfoundation@gmail.com`
+- **Email**: `info@ekarth.org` / `donate@ekarth.org`
 
 ---
 

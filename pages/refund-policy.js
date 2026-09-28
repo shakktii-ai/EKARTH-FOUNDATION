@@ -75,10 +75,17 @@ export default function RefundPolicy() {
               <p className="flex items-center">
                 <span className="mr-2">📧</span>
                 <a 
-                  href="mailto:ekarthfoundation@gmail.com" 
+                  href="mailto:donate@ekarth.org" 
                   className="text-blue-600 hover:underline"
                 >
-                  ekarthfoundation@gmail.com
+                  donate@ekarth.org
+                </a>
+                <span className="mx-2 text-gray-400">/</span>
+                <a 
+                  href="mailto:info@ekarth.org" 
+                  className="text-blue-600 hover:underline"
+                >
+                  info@ekarth.org
                 </a>
               </p>
               <p className="flex items-center mt-1">

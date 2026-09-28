@@ -71,10 +71,10 @@ export default function PrivacyPolicy() {
               <br />
               📧{" "}
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:info@ekarth.org"
                 className="text-blue-600 underline"
               >
-                ekarthfoundation@gmail.com
+                info@ekarth.org
               </a>{" "}
               | 📞{" "}
               <a href="tel:+919922899786" className="text-blue-600 underline">
@@ -149,10 +149,10 @@ export default function PrivacyPolicy() {
               <br />
               📧{" "}
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:info@ekarth.org"
                 className="text-blue-600 underline"
               >
-                ekarthfoundation@gmail.com
+                info@ekarth.org
               </a>
             </p>
 
@@ -178,10 +178,10 @@ export default function PrivacyPolicy() {
             <p className="mb-4">
               📧{" "}
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:donate@ekarth.org"
                 className="text-blue-600 underline"
               >
-                ekarthfoundation@gmail.com
+                donate@ekarth.org
               </a>
               <br />
               📞{" "}
@@ -204,10 +204,17 @@ export default function PrivacyPolicy() {
             <p className="mt-3">
               📧{" "}
               <a
-                href="mailto:ekarthfoundation@gmail.com"
+                href="mailto:info@ekarth.org"
                 className="text-blue-600 underline"
               >
-                ekarthfoundation@gmail.com
+                info@ekarth.org
+              </a>{" "}
+              /{" "}
+              <a
+                href="mailto:donate@ekarth.org"
+                className="text-blue-600 underline"
+              >
+                donate@ekarth.org
               </a>{" "}
               | 📞{" "}
               <a href="tel:+919922899786" className="text-blue-600 underline">
