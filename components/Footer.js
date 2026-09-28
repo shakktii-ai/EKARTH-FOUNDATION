@@ -10,12 +10,12 @@ export default function Footer() {
           {/* Brand & Mission */}
           <div className="lg:col-span-1 md:col-span-2">
             <div className="flex items-center gap-4 mb-6">
-              <div className="relative h-12 w-56">
+              <div className="relative h-20 w-56 bg-white/95 rounded-xl p-1.5 shadow-sm">
                 <Image 
-                  src="/ekarth-logo-white.svg" 
+                  src="/Logo (2).png" 
                   alt="Ekarth Foundation" 
                   fill 
-                  className="object-contain object-left" 
+                  className="object-contain" 
                 />
               </div>
             </div>

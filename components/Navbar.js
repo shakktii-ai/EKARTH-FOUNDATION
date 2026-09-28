@@ -29,16 +29,15 @@ export const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3 group">
-              <div className="relative h-32 w-44 sm:h-12 sm:w-56">
+              <div className="relative h-16 w-44 sm:h-24 sm:w-64">
                 <Image
-                  src="/ekarthword.png"
+                  src="/Logo (2).png"
                   alt="Ekarth Foundation"
                   fill
-                  className="object-contain"
+                  className="object-contain object-left"
                   priority
                 />
               </div>
-              
             </Link>
           </div>
 
