@@ -129,7 +129,7 @@ export default function Our() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-8 rounded-2xl bg-white/5 border border-[#2b4c33] backdrop-blur-sm flex flex-col justify-between">
             <span className="text-4xl sm:text-5xl lg:text-6xl font-light text-[#EDFFAA]">
-              100+
+              550+
             </span>
             <p className="mt-4 text-base sm:text-lg text-gray-200 font-light">
               Students supported since inception with targeted scholarship assistance.

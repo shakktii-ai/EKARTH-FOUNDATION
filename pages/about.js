@@ -92,14 +92,14 @@ function About() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
               {/* Left: Foundation Inspiration */}
-              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-10 bg-white/40 flex flex-col justify-between">
+              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-4 bg-white/40 flex flex-col justify-between">
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-5 border-b border-gray-900/15">
-                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white border border-amber-300 shadow-sm shrink-0">
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-white border border-amber-300 shadow-sm shrink-0">
                       <Image
-                        src="/chandrakantdadapatil.jpg"
+                        src="/chandrakantdadapatil.jpeg"
                         alt="Hon. Shri Chandrakant Dada Patil"
                         fill
                         className="object-cover object-top"
@@ -141,12 +141,12 @@ function About() {
               </div>
 
               {/* Right: Message from the Director */}
-              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-10 bg-white/40 flex flex-col justify-between">
+              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-4 bg-white/40 flex flex-col justify-between">
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-5 border-b border-gray-900/15">
-                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white border border-green-300 shadow-sm shrink-0">
+                    <div className="relative w-24 h-24 sm:w-36 sm:h-36 rounded-2xl overflow-hidden bg-white border border-green-300 shadow-sm shrink-0">
                       <Image
-                        src="/punit_Joshi.jpeg"
+                        src="/punit_Joshi1.jpeg"
                         alt="Punit Joshi"
                         fill
                         className="object-cover object-top"
@@ -184,7 +184,56 @@ function About() {
                   </p>
                 </div>
               </div>
+              {/*third column */}
+              <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-4 bg-white/40 flex flex-col justify-between">
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-5 border-b border-gray-900/15">
+                    <div className="relative w-24 h-24 sm:w-36 sm:h-36 rounded-2xl overflow-hidden bg-white border border-green-300 shadow-sm shrink-0">
+                      <Image
+                        src="/nikhil_savalgi.jpeg"
+                        alt="nikhil savalgi"
+                        fill
+                        className="object-cover object-top"
+                      />
+                    </div>
+                    <div>
+                      <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-900 text-xs font-semibold tracking-wider uppercase mb-2">
+                        Director Desk
+                      </span>
+                      <h3 className="text-xl sm:text-2xl font-normal text-gray-900 leading-snug">
+                        Nikhil Savalgi
+                      </h3>
+                      <p className="text-xs sm:text-sm font-medium text-green-900 uppercase tracking-wider mt-1">
+                        Director, Ekarth Foundation
+                      </p>
+                    </div>
+                  </div>
 
+                  <p className="text-base sm:text-lg font-light leading-relaxed text-gray-800">
+                    &ldquo;Our roots define us. Our actions shape our future.&rdquo;
+                  </p>
+
+                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;Ekarth Foundation is built on a simple belief: culture, community and compassion have the power to bring people together and create lasting change.&rdquo;
+                  </p>
+
+                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;Our vision is to preserve the richness of our heritage while creating meaningful opportunities for the generations ahead. Through cultural initiatives, community engagement and purposeful action, we strive to turn our values into impact.&rdquo;
+                  </p>
+                    <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;Ekarth is not just a foundation. It is a commitment to our roots, our people and our future.&rdquo;
+                    </p>
+                      <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;Let us come together to Elevate, Educate and Empower.&rdquo;
+                    </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-gray-900/20">
+                  <p className="italic font-light text-gray-900 text-sm">
+                    — Nikhil Savalgi, Director
+                  </p>
+                </div>
+              </div>
              
             </div>
           </div>
