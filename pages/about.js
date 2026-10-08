@@ -92,7 +92,7 @@ function About() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
               {/* Left: Foundation Inspiration */}
               <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-4 bg-white/40 flex flex-col justify-between">
                 <div className="space-y-6">
@@ -231,6 +231,51 @@ function About() {
                 <div className="pt-6 mt-6 border-t border-gray-900/20">
                   <p className="italic font-light text-gray-900 text-sm">
                     — Nikhil Savalgi, Director
+                  </p>
+                </div>
+              </div>
+             {/*fourth coloumn*/}
+             <div className="border border-gray-900/80 rounded-3xl p-6 sm:p-4 bg-white/40 flex flex-col justify-between">
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-5 border-b border-gray-900/15">
+                    <div className="relative w-24 h-24 sm:w-36 sm:h-36 rounded-2xl overflow-hidden bg-white border border-green-300 shadow-sm shrink-0">
+                      <Image
+                        src="/ankit_arvind_shetty.jpeg"
+                        alt="Ankit Arvind Shetty"
+                        fill
+                        className="object-cover object-top"
+                      />
+                    </div>
+                    <div>
+                      <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-900 text-xs font-semibold tracking-wider uppercase mb-2">
+                        Director Desk
+                      </span>
+                      <h3 className="text-xl sm:text-2xl font-normal text-gray-900 leading-snug">
+                        Ankit Arvind Shetty
+                      </h3>
+                      <p className="text-xs sm:text-sm font-medium text-green-900 uppercase tracking-wider mt-1">
+                        Director, Ekarth Foundation
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-base sm:text-lg font-light leading-relaxed text-gray-800">
+                    &ldquo;Rooted in culture. Driven by purpose. Committed to impact.&rdquo;
+                  </p>
+
+                  <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;At Ekarth Foundation, we believe that preserving our heritage and empowering our communities can create a stronger tomorrow.&rdquo;
+                  </p>
+
+                
+                      <p className="text-sm sm:text-base font-light leading-relaxed text-gray-700">
+                    &ldquo;Together, let us celebrate our roots, inspire change and build a lasting legacy.&rdquo;
+                    </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-gray-900/20">
+                  <p className="italic font-light text-gray-900 text-sm">
+                    — Ankit Arvind Shetty, Director
                   </p>
                 </div>
               </div>
