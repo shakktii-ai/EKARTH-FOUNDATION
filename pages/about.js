@@ -99,7 +99,7 @@ function About() {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-5 border-b border-gray-900/15">
                     <div className="relative w-24 h-24 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-white border border-amber-300 shadow-sm shrink-0">
                       <Image
-                        src="/chandrakantdadapatil.jpeg"
+                        src="/chandrakantdada.jpg"
                         alt="Hon. Shri Chandrakant Dada Patil"
                         fill
                         className="object-cover object-top"
