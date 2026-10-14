@@ -169,7 +169,7 @@ function Donate() {
         currency: orderData.currency || 'INR',
         name: 'Ekarth Foundation',
         description: `One-Time Donation - \u20B9 ${donationAmount.toLocaleString('en-IN')}`,
-        order_id: orderData.order_id || orderData.id,
+        ...(orderData.order_id ? { order_id: orderData.order_id } : {}),
         prefill: {
           name: form.name,
           email: form.email,
