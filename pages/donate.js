@@ -23,7 +23,7 @@ function Donate() {
     mobile: '',
     aadhaar: '',
     pancard: '',
-    taxBenefit: 'yes',
+    taxBenefit: 'no',
     country: 'India',
     state: '',
     city: '',
@@ -54,9 +54,16 @@ function Donate() {
     }));
   };
 
+  const handlePanInput = (e) => {
+    const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+    setForm((prev) => ({
+      ...prev,
+      pancard: val,
+    }));
+  };
+
   const handleAadhaarInput = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 12) value = value.slice(0, 12);
+    let value = e.target.value.replace(/\D/g, '').slice(0, 12);
     const formattedValue = value.match(/.{1,4}/g)?.join(' ') || '';
     setForm((prev) => ({
       ...prev,
@@ -90,26 +97,38 @@ function Donate() {
       toast.error('Please select or enter a valid donation amount (minimum \u20B9 1)');
       return false;
     }
-    if (!form.name || !form.email || !form.mobile) {
-      toast.error('Please fill in all required fields (Name, Email, Mobile)');
+    if (!form.name || !form.name.trim()) {
+      toast.error('Please enter your full name');
       return false;
     }
-    if (!/^\d{10}$/.test(form.mobile.trim())) {
+    if (!form.email || !form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) {
+      toast.error('Please enter a valid email address');
+      return false;
+    }
+    if (!form.mobile || !/^\d{10}$/.test(form.mobile.trim())) {
       toast.error('Please enter a valid 10-digit mobile number');
       return false;
     }
 
-    // MANDATORY ID CHECK: Aadhaar OR PAN Card is strictly required
+    // OPTION VALIDATION: Whichever ID type is selected, that field is strictly compulsory
     if (idType === 'pan') {
       const cleanPan = (form.pancard || '').trim().toUpperCase();
-      if (!cleanPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+      if (!cleanPan) {
+        toast.error('Please enter your PAN Card number (Compulsory)');
+        return false;
+      }
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
         toast.error('Please enter a valid 10-digit PAN Card number (e.g. ABCDE1234F)');
         return false;
       }
     } else {
-      const cleanAadhaar = (form.aadhaar || '').trim();
-      if (!cleanAadhaar || !/^\d{4}\s\d{4}\s\d{4}$/.test(cleanAadhaar)) {
-        toast.error('Please enter a valid 12-digit Aadhaar Card number (1234 5678 9012)');
+      const cleanAadhaar = (form.aadhaar || '').replace(/\s/g, '');
+      if (!cleanAadhaar) {
+        toast.error('Please enter your Aadhaar Card number (Compulsory)');
+        return false;
+      }
+      if (!/^\d{12}$/.test(cleanAadhaar)) {
+        toast.error('Please enter a valid 12-digit Aadhaar Card number');
         return false;
       }
     }
@@ -136,6 +155,8 @@ function Donate() {
     try {
       const donationAmount = getEffectiveAmount();
       const amountInPaise = Math.round(donationAmount * 100);
+      const cleanPan = (form.pancard || '').trim().toUpperCase();
+      const cleanAadhaar = (form.aadhaar || '').trim();
 
       // STEP 1: Backend - Create Order
       const res = await fetch('/api/create-order', {
@@ -144,18 +165,19 @@ function Donate() {
         body: JSON.stringify({
           amount: amountInPaise,
           currency: 'INR',
-          receipt: `rcpt_${Date.now()}`,
-          name: form.name,
-          email: form.email,
-          mobile: form.mobile,
-          aadhaar: idType === 'aadhaar' ? form.aadhaar : (form.aadhaar || null),
-          pancard: idType === 'pan' ? form.pancard.toUpperCase().trim() : (form.pancard ? form.pancard.toUpperCase().trim() : null),
-          taxBenefit: form.taxBenefit || 'yes',
+          receipt: 'rcpt_' + Date.now(),
+          name: form.name.trim(),
+          email: form.email.trim(),
+          mobile: form.mobile.trim(),
+          aadhaar: idType === 'aadhaar' ? cleanAadhaar : (cleanAadhaar || null),
+          pancard: idType === 'pan' ? cleanPan : (cleanPan || null),
+          pan: idType === 'pan' ? cleanPan : (cleanPan || null),
+          taxBenefit: form.taxBenefit || 'no',
           country: form.country,
-          state: form.state,
-          city: form.city,
-          address: form.address,
-          pincode: form.pincode,
+          state: form.state.trim() || null,
+          city: form.city.trim() || null,
+          address: form.address.trim() || null,
+          pincode: form.pincode.trim() || null,
         }),
       });
 
@@ -176,7 +198,7 @@ function Donate() {
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'Ekarth Foundation',
-        description: `One-Time Donation - \u20B9 ${donationAmount.toLocaleString('en-IN')}`,
+        description: 'One-Time Donation - \u20B9 ' + donationAmount.toLocaleString('en-IN'),
         order_id: orderData.order_id || orderData.id,
         prefill: {
           name: form.name,
@@ -196,6 +218,23 @@ function Donate() {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                donorInfo: {
+                  name: form.name.trim(),
+                  email: form.email.trim(),
+                  mobile: form.mobile.trim(),
+                  amount: donationAmount,
+                  pancard: idType === 'pan' ? cleanPan : (cleanPan || null),
+                  pan: idType === 'pan' ? cleanPan : (cleanPan || null),
+                  aadhaar: idType === 'aadhaar' ? cleanAadhaar : (cleanAadhaar || null),
+                  taxBenefit: form.taxBenefit || 'no',
+                  address: form.address.trim() || '',
+                  city: form.city.trim() || '',
+                  state: form.state.trim() || '',
+                  pincode: form.pincode.trim() || '',
+                  country: form.country || 'India',
+                },
               }),
             });
 
@@ -209,7 +248,7 @@ function Donate() {
                 mobile: '',
                 aadhaar: '',
                 pancard: '',
-                taxBenefit: 'yes',
+                taxBenefit: 'no',
                 country: 'India',
                 state: '',
                 city: '',
@@ -260,19 +299,19 @@ function Donate() {
       <Head>
         <title>Donate | Ekarth Foundation</title>
         <meta
-          name="description"
-          content="Support education scholarships and community welfare with Ekarth Foundation. 80G Tax Benefit eligible."
+          name='description'
+          content='Support education scholarships and community welfare with Ekarth Foundation. 80G Tax Benefit eligible.'
         />
       </Head>
 
-      <section className="min-h-[20rem] pt-20 font-manrope font-light bg-[#f8fced] flex items-center justify-center px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10 text-center md:text-left">
-          <div className="flex-1">
-            <h1 className="text-4xl md:text-6xl font-light text-gray-900 leading-tight">
+      <section className='min-h-[20rem] pt-20 font-manrope font-light bg-[#f8fced] flex items-center justify-center px-6'>
+        <div className='max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10 text-center md:text-left'>
+          <div className='flex-1'>
+            <h1 className='text-4xl md:text-6xl font-light text-gray-900 leading-tight'>
               Donate
             </h1>
           </div>
-          <div className="flex-1 text-gray-700 text-base md:text-lg leading-relaxed max-w-lg">
+          <div className='flex-1 text-gray-700 text-base md:text-lg leading-relaxed max-w-lg'>
             <p>
               We believe in the power of collective effort to bring hope, change, and educational opportunity to students in need. Join us as we work to create a brighter future for all.
             </p>
@@ -280,53 +319,53 @@ function Donate() {
         </div>
       </section>
 
-      <section className="bg-white py-16 px-6 md:px-16">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-10">
+      <section className='bg-white py-16 px-6 md:px-16'>
+        <div className='max-w-7xl mx-auto grid md:grid-cols-2 gap-10'>
           {/* Left Side: Impact Story */}
-          <div className="font-manrope font-light">
-            <h2 className="text-2xl md:text-3xl font-manrope font-bold mb-6 text-black uppercase">
+          <div className='font-manrope font-light'>
+            <h2 className='text-2xl md:text-3xl font-manrope font-bold mb-6 text-black uppercase'>
               Empower a Child&apos;s Education &amp; Future
             </h2>
 
-            <p className="text-gray-700 mb-4 leading-relaxed">
+            <p className='text-gray-700 mb-4 leading-relaxed'>
               Education is every child&apos;s fundamental right &mdash; it is the single most powerful tool to break the cycle of poverty and unlock human potential. Yet, across Maharashtra and India, thousands of deserving students face the risk of dropping out simply due to unmanageable school fees, exam charges, or lack of learning essentials.
             </p>
 
-            <p className="text-gray-700 mb-4 leading-relaxed">
+            <p className='text-gray-700 mb-4 leading-relaxed'>
               At <b>Ekarth Foundation</b>, we believe that no aspiring student should be left behind due to financial hardship. Through our direct scholarship programs, school partnerships, education kit distributions, and hospital medical aid, we provide continuous, transparent support to underprivileged children and families.
             </p>
 
-            <p className="text-gray-700 mb-4 leading-relaxed">
+            <p className='text-gray-700 mb-4 leading-relaxed'>
               Every contribution you make helps a child stay in school &mdash; funding up to &#8377; 5,000 in school fees, providing textbooks and notebooks, or delivering essential healthcare support that brings relief and stability to struggling households.
             </p>
 
-            <p className="text-gray-700 mb-4 leading-relaxed">
+            <p className='text-gray-700 mb-4 leading-relaxed'>
               Our initiatives are not just charity &mdash; they are investments in young minds, dignity, and nation-building. With your support, we can expand our reach across schools and colleges in Pune and beyond.
             </p>
 
-            <p className="text-gray-700 leading-relaxed">
+            <p className='text-gray-700 leading-relaxed'>
               Together, let&apos;s build a future where every child is empowered to learn, grow, and achieve their dreams. Your generosity can illuminate a life forever.
             </p>
           </div>
 
           {/* Right Side: Donation Form */}
-          <div className="border border-green-500 rounded-2xl p-6 md:p-8 shadow-md bg-white">
-            <h3 className="text-xl font-bold text-center mb-1 uppercase text-gray-900">
+          <div className='border border-green-500 rounded-2xl p-6 md:p-8 shadow-md bg-white'>
+            <h3 className='text-xl font-bold text-center mb-1 uppercase text-gray-900'>
               Support the Cause
             </h3>
 
-            <p className="text-center text-sm font-semibold text-emerald-700 mb-5 uppercase tracking-wider">
+            <p className='text-center text-sm font-semibold text-emerald-700 mb-5 uppercase tracking-wider'>
               One-Time Contribution
             </p>
 
             {/* Amount Selection Buttons */}
-            <div className="grid grid-cols-3 gap-2.5 mb-4">
+            <div className='grid grid-cols-3 gap-2.5 mb-4'>
               {PRESET_AMOUNTS.map((preset) => {
                 const isSelected = selectedAmount === preset.amount && !customAmount;
                 return (
                   <button
                     key={preset.id}
-                    type="button"
+                    type='button'
                     onClick={() => handleAmountSelect(preset.amount)}
                     className={`py-2.5 px-3 rounded-xl border text-sm font-bold transition-all ${
                       isSelected
@@ -341,198 +380,257 @@ function Donate() {
             </div>
 
             {/* Custom Amount Field */}
-            <div className="mb-5">
-              <div className="relative">
-                <span className="absolute left-4 top-2.5 text-gray-500 font-bold">&#8377;</span>
+            <div className='mb-5'>
+              <div className='relative'>
+                <span className='absolute left-4 top-2.5 text-gray-500 font-bold'>&#8377;</span>
                 <input
-                  type="text"
-                  placeholder="Or enter custom amount in INR"
+                  type='text'
+                  placeholder='Or enter custom amount in INR'
                   value={customAmount}
                   onChange={handleCustomAmountChange}
-                  className="w-full border border-gray-300 rounded-xl pl-8 pr-4 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                  className='w-full border border-gray-300 rounded-xl pl-8 pr-4 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500'
                 />
               </div>
             </div>
 
             {/* Trust and Summary Badge */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-5 flex items-center justify-between text-xs text-emerald-900">
-              <span className="font-semibold">
-                Contributing: <strong className="text-sm font-extrabold text-emerald-700">&#8377; {effectiveAmount.toLocaleString('en-IN')}</strong>
+            <div className='bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-5 flex items-center justify-between text-xs text-emerald-900'>
+              <span className='font-semibold'>
+                Contributing: <strong className='text-sm font-extrabold text-emerald-700'>&#8377; {effectiveAmount.toLocaleString('en-IN')}</strong>
               </span>
-              <span className="text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 font-medium">
+              <span className='text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 font-medium'>
                 Standard One-Time Checkout
               </span>
             </div>
 
-            <form className="space-y-3" onSubmit={handleDonate}>
-              {/* Mandatory Government ID Proof (Aadhaar or PAN) */}
-              <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
-                    <span>Identity Proof (Required) *</span>
-                  </label>
-                  <span className="text-[11px] text-emerald-700 font-bold bg-white px-2 py-0.5 rounded-full border border-emerald-200">
-                    80G Compliance
+            <form className='space-y-4' onSubmit={handleDonate}>
+              {/* Government ID Verification: Option to choose ANY ONE field (Compulsory) */}
+              <div className='border border-gray-200 bg-gray-50/70 rounded-2xl p-4'>
+                <div className='flex items-center justify-between mb-2.5'>
+                  <div>
+                    <label className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>
+                      Government ID Verification *
+                    </label>
+                    <span className='text-[11px] text-gray-500'>
+                      Select any one option to provide (Compulsory)
+                    </span>
+                  </div>
+                  <span className='text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300'>
+                    Any One Compulsory
                   </span>
                 </div>
-                
-                {/* ID Type Selector Tabs */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
+
+                {/* Option Selector: Choose PAN Card OR Aadhaar Card */}
+                <div className='grid grid-cols-2 gap-2.5 mb-3.5'>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setIdType('pan')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       idType === 'pan'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
+                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${idType === 'pan' ? 'border-white bg-white' : 'border-gray-400'}`}>
+                      {idType === 'pan' && <span className='w-1.5 h-1.5 rounded-full bg-emerald-600'></span>}
+                    </span>
                     <span>PAN Card</span>
-                    {form.pancard ? <span className="w-1.5 h-1.5 rounded-full bg-white" /> : null}
                   </button>
 
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setIdType('aadhaar')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       idType === 'aadhaar'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
+                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${idType === 'aadhaar' ? 'border-white bg-white' : 'border-gray-400'}`}>
+                      {idType === 'aadhaar' && <span className='w-1.5 h-1.5 rounded-full bg-emerald-600'></span>}
+                    </span>
                     <span>Aadhaar Card</span>
-                    {form.aadhaar ? <span className="w-1.5 h-1.5 rounded-full bg-white" /> : null}
                   </button>
                 </div>
 
+                {/* Single Compulsory Input Field based on user's choice */}
                 {idType === 'pan' ? (
                   <div>
+                    <label className='block text-xs font-semibold text-gray-700 mb-1'>
+                      PAN Card Number <span className='text-rose-500 font-bold'>*</span>
+                      {form.pancard && /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pancard) && (
+                        <span className='text-emerald-600 ml-1.5 font-bold'>&#10003; Valid PAN</span>
+                      )}
+                    </label>
                     <input
-                      type="text"
-                      name="pancard"
-                      placeholder="Enter PAN Card (e.g. ABCDE1234F) *"
+                      type='text'
+                      name='pancard'
+                      placeholder='Enter PAN Card (e.g. ABCDE1234F) *'
                       value={form.pancard}
-                      onChange={handleInputChange}
+                      onChange={handlePanInput}
                       maxLength={10}
-                      className="w-full border border-emerald-300 rounded-xl px-4 py-2.5 text-sm bg-white uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-wider"
+                      className='w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-white uppercase focus:outline-none focus:ring-2 focus:ring-green-500 font-mono tracking-wider'
                       required
                     />
-                    <p className="text-[11px] text-emerald-800 mt-1">
-                      Required for 80G tax benefit receipt under Government Form 10BD.
+                    <p className='text-[10px] text-gray-500 mt-1'>
+                      Compulsory 10-character alphanumeric PAN registered with Income Tax Department.
                     </p>
                   </div>
                 ) : (
                   <div>
+                    <label className='block text-xs font-semibold text-gray-700 mb-1'>
+                      Aadhaar Card Number <span className='text-rose-500 font-bold'>*</span>
+                      {form.aadhaar && form.aadhaar.replace(/\s/g, '').length === 12 && (
+                        <span className='text-emerald-600 ml-1.5 font-bold'>&#10003; Valid Aadhaar</span>
+                      )}
+                    </label>
                     <input
-                      type="text"
-                      name="aadhaar"
-                      placeholder="Enter 12-digit Aadhaar (1234 5678 9012) *"
+                      type='text'
+                      name='aadhaar'
+                      placeholder='Enter 12-digit Aadhaar (1234 5678 9012) *'
                       value={form.aadhaar}
                       onChange={handleAadhaarInput}
                       maxLength={14}
-                      className="w-full border border-emerald-300 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-wider"
+                      className='w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 font-mono tracking-wider'
                       required
                     />
-                    <p className="text-[11px] text-emerald-800 mt-1">
-                      Your Aadhaar number is securely recorded for official non-profit donation compliance.
+                    <p className='text-[10px] text-gray-500 mt-1'>
+                      Compulsory 12-digit Aadhaar UID number for non-profit identity record.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Donor Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Separate Standalone 80G Tax Exemption Toggle */}
+              <div className='bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5'>
+                <label className='flex items-center justify-between cursor-pointer'>
+                  <div className='flex items-center gap-3'>
+                    <input
+                      type='checkbox'
+                      name='taxBenefit'
+                      checked={form.taxBenefit === 'yes'}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          taxBenefit: e.target.checked ? 'yes' : 'no',
+                        }))
+                      }
+                      className='w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer'
+                    />
+                    <div>
+                      <span className='text-xs sm:text-sm font-bold text-emerald-950 block'>
+                        I want 80G Tax Exemption Certificate
+                      </span>
+                      <span className='text-[11px] text-emerald-700 block'>
+                        Claim 50% tax deduction on your donation under Section 80G of Income Tax Act
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-colors ${
+                      form.taxBenefit === 'yes'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : 'bg-white text-gray-500 border-gray-300'
+                    }`}
+                  >
+                    {form.taxBenefit === 'yes' ? '80G Opted' : 'Optional'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Donor Contact Details */}
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <input
-                  type="text"
-                  name="name"
-                  placeholder="Full Name *"
+                  type='text'
+                  name='name'
+                  placeholder='Full Name *'
                   value={form.name}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                   required
                 />
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email ID *"
+                  type='email'
+                  name='email'
+                  placeholder='Email ID *'
                   value={form.email}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <input
-                  type="tel"
-                  name="mobile"
-                  placeholder="10-digit Mobile Number *"
+                  type='tel'
+                  name='mobile'
+                  placeholder='10-digit Mobile Number *'
                   value={form.mobile}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                   maxLength={10}
                   required
                 />
                 <input
-                  type="text"
-                  name="country"
-                  placeholder="Country"
+                  type='text'
+                  name='country'
+                  placeholder='Country'
                   value={form.country}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-gray-50"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-gray-50'
                   readOnly
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <input
-                  type="text"
-                  name="state"
-                  placeholder="State"
+                  type='text'
+                  name='state'
+                  placeholder='State'
                   value={form.state}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                 />
                 <input
-                  type="text"
-                  name="city"
-                  placeholder="City"
+                  type='text'
+                  name='city'
+                  placeholder='City'
                   value={form.city}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                  className='border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                 />
               </div>
 
               <input
-                type="text"
-                name="address"
-                placeholder="Address (Optional)"
+                type='text'
+                name='address'
+                placeholder='Address (Optional)'
                 value={form.address}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                className='w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
               />
 
               <input
-                type="text"
-                name="pincode"
-                placeholder="Pincode"
+                type='text'
+                name='pincode'
+                placeholder='Pincode'
                 value={form.pincode}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
+                className='w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500'
                 maxLength={6}
               />
 
-              <p className="text-[11px] text-gray-500 mt-3 leading-relaxed">
+              <p className='text-[11px] text-gray-500 mt-3 leading-relaxed'>
                 *Your contributions are eligible for tax benefits under Section 80G &amp; 12A of the Income Tax Act as Ekarth Foundation is registered as a non-profit organization (CIN: U88900PN2025NPL246146).
               </p>
 
-              <label className="flex items-start text-xs text-gray-600 mt-2 cursor-pointer">
+              <label className='flex items-start text-xs text-gray-600 mt-2 cursor-pointer'>
                 <input
-                  type="checkbox"
-                  name="agreeTerms"
+                  type='checkbox'
+                  name='agreeTerms'
                   checked={form.agreeTerms}
                   onChange={handleInputChange}
-                  className="mt-0.5 mr-2 rounded text-green-600 focus:ring-green-500 cursor-pointer"
+                  className='mt-0.5 mr-2 rounded text-green-600 focus:ring-green-500 cursor-pointer'
                   required
                 />
                 <span>
@@ -541,28 +639,35 @@ function Donate() {
               </label>
 
               <button
-                type="submit"
+                type='submit'
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-3.5 rounded-xl font-bold mt-4 hover:bg-green-700 transition shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className='w-full bg-green-600 text-white py-3.5 rounded-xl font-bold mt-4 hover:bg-green-700 transition shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer'
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    <svg className='animate-spin h-4 w-4 text-white' fill='none' viewBox='0 0 24 24'>
+                      <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                      <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v8H4z'></path>
                     </svg>
-                    <span>Opening Payment Gateway...</span>
+                    <span>Processing with Razorpay...</span>
                   </>
                 ) : (
-                  <span>Donate &#8377; {effectiveAmount.toLocaleString('en-IN')} Now</span>
+                  <span>Donate &#8377; {effectiveAmount.toLocaleString('en-IN')}</span>
                 )}
               </button>
-            </form>
 
-            <ToastContainer position="top-right" autoClose={3000} />
+              <div className='flex items-center justify-center gap-2 text-[11px] text-gray-500 mt-2'>
+                <svg className='w-3.5 h-3.5 text-emerald-600' fill='currentColor' viewBox='0 0 20 20'>
+                  <path fillRule='evenodd' d='M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v4a1 1 0 102 0V7z' clipRule='evenodd' />
+                </svg>
+                <span>Secured by 256-Bit Razorpay Standard Checkout &amp; 80G Encrypted Storage</span>
+              </div>
+            </form>
           </div>
         </div>
       </section>
+
+      <ToastContainer position='top-right' autoClose={4000} />
     </>
   );
 }

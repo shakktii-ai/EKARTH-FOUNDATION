@@ -1,10 +1,10 @@
-import crypto from "crypto";
-import connectDB from "../../lib/db.js";
-import Donation from "../../models/Donation.js";
+import crypto from 'crypto';
+import connectDB from '../../lib/db.js';
+import Donation from '../../models/Donation.js';
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   const {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   if (!targetPaymentId) {
     return res.status(400).json({
       success: false,
-      error: "Missing required payment_id",
+      error: 'Missing required payment_id',
     });
   }
 
@@ -32,27 +32,27 @@ export default async function handler(req, res) {
 
   if (targetOrderId && targetSignature && key_secret) {
     try {
-      const text = targetOrderId + "|" + targetPaymentId;
+      const text = targetOrderId + '|' + targetPaymentId;
       const generatedSignature = crypto
-        .createHmac("sha256", key_secret)
+        .createHmac('sha256', key_secret)
         .update(text)
-        .digest("hex");
+        .digest('hex');
 
       if (generatedSignature === targetSignature) {
         signatureVerified = true;
       }
     } catch (hmacErr) {
-      console.warn("HMAC verification warning:", hmacErr.message);
+      console.warn('HMAC verification warning:', hmacErr.message);
     }
   }
 
-  const keyId = process.env.RAZORPAY_KEY_ID || "";
-  const isTestMode = keyId.startsWith("rzp_test_") || targetPaymentId.startsWith("pay_");
+  const keyId = process.env.RAZORPAY_KEY_ID || '';
+  const isTestMode = keyId.startsWith('rzp_test_') || targetPaymentId.startsWith('pay_');
 
   if (targetOrderId && targetSignature && !signatureVerified && !isTestMode) {
     return res.status(400).json({
       success: false,
-      error: "Signature verification failed: generated signature does not match razorpay_signature",
+      error: 'Signature verification failed: generated signature does not match razorpay_signature',
     });
   }
 
@@ -61,9 +61,9 @@ export default async function handler(req, res) {
     await connectDB();
     const updatePayload = {
       paymentId: targetPaymentId,
-      orderId: targetOrderId || ("ord_" + Date.now()),
-      signature: targetSignature || "verified_checkout",
-      status: "success",
+      orderId: targetOrderId || ('ord_' + Date.now()),
+      signature: targetSignature || 'verified_checkout',
+      status: 'success',
     };
 
     if (donorInfo?.pancard || donorInfo?.pan) {
@@ -74,13 +74,20 @@ export default async function handler(req, res) {
     if (donorInfo?.aadhaar) {
       updatePayload.aadhaar = donorInfo.aadhaar.trim();
     }
+    if (donorInfo?.taxBenefit) {
+      updatePayload.taxBenefit = donorInfo.taxBenefit;
+    }
+    if (donorInfo?.address) updatePayload.address = donorInfo.address;
+    if (donorInfo?.city) updatePayload.city = donorInfo.city;
+    if (donorInfo?.state) updatePayload.state = donorInfo.state;
+    if (donorInfo?.pincode) updatePayload.pincode = donorInfo.pincode;
 
     donation = await Donation.findOneAndUpdate(
       {
         $or: [
           targetOrderId ? { orderId: targetOrderId } : null,
           targetPaymentId ? { paymentId: targetPaymentId } : null,
-          { status: "created" }
+          { status: 'created' }
         ].filter(Boolean)
       },
       updatePayload,
@@ -90,19 +97,19 @@ export default async function handler(req, res) {
     if (!donation && donorInfo) {
       const cleanPan = (donorInfo.pancard || donorInfo.pan || '').toUpperCase().trim() || null;
       donation = await Donation.create({
-        donorName: donorInfo.name || "Donor",
-        email: donorInfo.email || "donor@ekarth.org",
-        mobile: donorInfo.mobile || "0000000000",
+        donorName: donorInfo.name || 'Donor',
+        email: donorInfo.email || 'donor@ekarth.org',
+        mobile: donorInfo.mobile || '0000000000',
         amount: Number(donorInfo.amount || 0) || 1,
-        orderId: targetOrderId || ("ord_" + Date.now()),
+        orderId: targetOrderId || ('ord_' + Date.now()),
         paymentId: targetPaymentId,
-        signature: targetSignature || "verified_checkout",
-        status: "success",
+        signature: targetSignature || 'verified_checkout',
+        status: 'success',
         aadhaar: donorInfo.aadhaar || null,
         pancard: cleanPan,
         pan: cleanPan,
-        taxBenefit: donorInfo.taxBenefit || "yes",
-        country: donorInfo.country || "India",
+        taxBenefit: donorInfo.taxBenefit || 'no',
+        country: donorInfo.country || 'India',
         state: donorInfo.state || null,
         city: donorInfo.city || null,
         address: donorInfo.address || null,
@@ -110,12 +117,12 @@ export default async function handler(req, res) {
       });
     }
   } catch (dbErr) {
-    console.warn("Could not update donation in DB:", dbErr.message);
+    console.warn('Could not update donation in DB:', dbErr.message);
   }
 
   return res.status(200).json({
     success: true,
-    message: "Payment verified successfully",
+    message: 'Payment verified successfully',
     order_id: targetOrderId,
     payment_id: targetPaymentId,
     donation,

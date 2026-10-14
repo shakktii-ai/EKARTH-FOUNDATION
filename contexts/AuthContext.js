@@ -9,19 +9,21 @@ export const AuthProvider = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check if admin is logged in
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
     if (token) {
-      // In a real app, verify the token with your backend
-      setUser({ email: 'admin@example.com' });
+      setUser({ email: 'Ekath@gmail.com' });
     }
     setLoading(false);
   }, []);
 
   const login = (email, password) => {
-    // In a real app, verify credentials with your backend
-    if (email === 'admin@example.com' && password === 'admin123') {
-      const user = { email };
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const isEmailValid = cleanEmail === 'ekath@gmail.com' || cleanEmail === 'ekarth@gmail.com' || cleanEmail === 'admin@example.com';
+    const isPasswordValid = password === 'Ekath@123' || password === 'admin123';
+
+    if (isEmailValid && isPasswordValid) {
+      const user = { email: email.trim() };
       localStorage.setItem('adminToken', 'dummy-token');
       setUser(user);
       return { success: true };
