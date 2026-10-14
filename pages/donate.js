@@ -15,7 +15,6 @@ const PRESET_AMOUNTS = [
 function Donate() {
   const [selectedAmount, setSelectedAmount] = useState(1000);
   const [customAmount, setCustomAmount] = useState('');
-  const [idType, setIdType] = useState('pan'); // 'pan' | 'aadhaar'
 
   const [form, setForm] = useState({
     name: '',
@@ -110,27 +109,25 @@ function Donate() {
       return false;
     }
 
-    // OPTION VALIDATION: Whichever ID type is selected, that field is strictly compulsory
-    if (idType === 'pan') {
-      const cleanPan = (form.pancard || '').trim().toUpperCase();
-      if (!cleanPan) {
-        toast.error('Please enter your PAN Card number (Compulsory)');
-        return false;
-      }
-      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
-        toast.error('Please enter a valid 10-digit PAN Card number (e.g. ABCDE1234F)');
-        return false;
-      }
-    } else {
-      const cleanAadhaar = (form.aadhaar || '').replace(/\s/g, '');
-      if (!cleanAadhaar) {
-        toast.error('Please enter your Aadhaar Card number (Compulsory)');
-        return false;
-      }
-      if (!/^\d{12}$/.test(cleanAadhaar)) {
-        toast.error('Please enter a valid 12-digit Aadhaar Card number');
-        return false;
-      }
+    // STRICT REQUIREMENT: BOTH PAN CARD AND AADHAAR CARD ARE COMPULSORY
+    const cleanPan = (form.pancard || '').trim().toUpperCase();
+    if (!cleanPan) {
+      toast.error('PAN Card number is compulsory. Please enter your PAN Card number.');
+      return false;
+    }
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+      toast.error('Please enter a valid 10-digit PAN Card number (e.g. ABCDE1234F)');
+      return false;
+    }
+
+    const cleanAadhaar = (form.aadhaar || '').replace(/\s/g, '');
+    if (!cleanAadhaar) {
+      toast.error('Aadhaar Card number is compulsory. Please enter your Aadhaar Card number.');
+      return false;
+    }
+    if (!/^\d{12}$/.test(cleanAadhaar)) {
+      toast.error('Please enter a valid 12-digit Aadhaar Card number');
+      return false;
     }
 
     if (!form.agreeTerms) {
@@ -158,7 +155,7 @@ function Donate() {
       const cleanPan = (form.pancard || '').trim().toUpperCase();
       const cleanAadhaar = (form.aadhaar || '').trim();
 
-      // STEP 1: Backend - Create Order
+      // STEP 1: Backend - Create Order with all donor info
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,9 +166,9 @@ function Donate() {
           name: form.name.trim(),
           email: form.email.trim(),
           mobile: form.mobile.trim(),
-          aadhaar: idType === 'aadhaar' ? cleanAadhaar : (cleanAadhaar || null),
-          pancard: idType === 'pan' ? cleanPan : (cleanPan || null),
-          pan: idType === 'pan' ? cleanPan : (cleanPan || null),
+          aadhaar: cleanAadhaar,
+          pancard: cleanPan,
+          pan: cleanPan,
           taxBenefit: form.taxBenefit || 'no',
           country: form.country,
           state: form.state.trim() || null,
@@ -208,7 +205,7 @@ function Donate() {
         theme: {
           color: '#22c55e',
         },
-        // STEP 3: Backend - Verify Signature
+        // STEP 3: Backend - Verify Signature & save all details
         handler: async function (response) {
           try {
             const verifyRes = await fetch('/api/verify-payment', {
@@ -225,9 +222,9 @@ function Donate() {
                   email: form.email.trim(),
                   mobile: form.mobile.trim(),
                   amount: donationAmount,
-                  pancard: idType === 'pan' ? cleanPan : (cleanPan || null),
-                  pan: idType === 'pan' ? cleanPan : (cleanPan || null),
-                  aadhaar: idType === 'aadhaar' ? cleanAadhaar : (cleanAadhaar || null),
+                  pancard: cleanPan,
+                  pan: cleanPan,
+                  aadhaar: cleanAadhaar,
                   taxBenefit: form.taxBenefit || 'no',
                   address: form.address.trim() || '',
                   city: form.city.trim() || '',
@@ -404,59 +401,26 @@ function Donate() {
             </div>
 
             <form className='space-y-4' onSubmit={handleDonate}>
-              {/* Government ID Verification: Option to choose ANY ONE field (Compulsory) */}
-              <div className='border border-gray-200 bg-gray-50/70 rounded-2xl p-4'>
-                <div className='flex items-center justify-between mb-2.5'>
+              {/* Government ID Verification: BOTH PAN AND AADHAAR ARE COMPULSORY */}
+              <div className='border border-emerald-300 bg-emerald-50/50 rounded-2xl p-4'>
+                <div className='flex items-center justify-between mb-3'>
                   <div>
                     <label className='text-xs font-bold text-gray-900 uppercase tracking-wider block'>
                       Government ID Verification *
                     </label>
-                    <span className='text-[11px] text-gray-500'>
-                      Select any one option to provide (Compulsory)
+                    <span className='text-[11px] text-gray-600'>
+                      Both fields are compulsory for NGO donation compliance
                     </span>
                   </div>
-                  <span className='text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300'>
-                    Any One Compulsory
+                  <span className='text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs'>
+                    Both Compulsory
                   </span>
                 </div>
 
-                {/* Option Selector: Choose PAN Card OR Aadhaar Card */}
-                <div className='grid grid-cols-2 gap-2.5 mb-3.5'>
-                  <button
-                    type='button'
-                    onClick={() => setIdType('pan')}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      idType === 'pan'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${idType === 'pan' ? 'border-white bg-white' : 'border-gray-400'}`}>
-                      {idType === 'pan' && <span className='w-1.5 h-1.5 rounded-full bg-emerald-600'></span>}
-                    </span>
-                    <span>PAN Card</span>
-                  </button>
-
-                  <button
-                    type='button'
-                    onClick={() => setIdType('aadhaar')}
-                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      idType === 'aadhaar'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${idType === 'aadhaar' ? 'border-white bg-white' : 'border-gray-400'}`}>
-                      {idType === 'aadhaar' && <span className='w-1.5 h-1.5 rounded-full bg-emerald-600'></span>}
-                    </span>
-                    <span>Aadhaar Card</span>
-                  </button>
-                </div>
-
-                {/* Single Compulsory Input Field based on user's choice */}
-                {idType === 'pan' ? (
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3.5'>
+                  {/* PAN Card Input */}
                   <div>
-                    <label className='block text-xs font-semibold text-gray-700 mb-1'>
+                    <label className='block text-xs font-bold text-gray-700 mb-1'>
                       PAN Card Number <span className='text-rose-500 font-bold'>*</span>
                       {form.pancard && /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pancard) && (
                         <span className='text-emerald-600 ml-1.5 font-bold'>&#10003; Valid PAN</span>
@@ -465,7 +429,7 @@ function Donate() {
                     <input
                       type='text'
                       name='pancard'
-                      placeholder='Enter PAN Card (e.g. ABCDE1234F) *'
+                      placeholder='Enter 10-digit PAN (e.g. ABCDE1234F) *'
                       value={form.pancard}
                       onChange={handlePanInput}
                       maxLength={10}
@@ -473,12 +437,13 @@ function Donate() {
                       required
                     />
                     <p className='text-[10px] text-gray-500 mt-1'>
-                      Compulsory 10-character alphanumeric PAN registered with Income Tax Department.
+                      Mandatory 10-character alphanumeric PAN
                     </p>
                   </div>
-                ) : (
+
+                  {/* Aadhaar Card Input */}
                   <div>
-                    <label className='block text-xs font-semibold text-gray-700 mb-1'>
+                    <label className='block text-xs font-bold text-gray-700 mb-1'>
                       Aadhaar Card Number <span className='text-rose-500 font-bold'>*</span>
                       {form.aadhaar && form.aadhaar.replace(/\s/g, '').length === 12 && (
                         <span className='text-emerald-600 ml-1.5 font-bold'>&#10003; Valid Aadhaar</span>
@@ -495,10 +460,14 @@ function Donate() {
                       required
                     />
                     <p className='text-[10px] text-gray-500 mt-1'>
-                      Compulsory 12-digit Aadhaar UID number for non-profit identity record.
+                      Mandatory 12-digit Aadhaar UID number
                     </p>
                   </div>
-                )}
+                </div>
+
+                <p className='text-[11px] text-emerald-900 bg-white/80 border border-emerald-200/80 rounded-lg p-2 mt-3 leading-normal font-medium'>
+                  * Both PAN Card and Aadhaar Card are mandatory for compliance under Income Tax Act &amp; Non-Profit records.
+                </p>
               </div>
 
               {/* Separate Standalone 80G Tax Exemption Toggle */}
