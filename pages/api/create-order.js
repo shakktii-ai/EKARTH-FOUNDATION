@@ -7,8 +7,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Tnl0IY0QBPANsf";
+  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
   const key_secret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!key_id || !key_secret) {
+    return res.status(401).json({ error: "Razorpay credentials not configured or unauthorized" });
+  }
 
   const {
     amount,
@@ -19,6 +23,7 @@ export default async function handler(req, res) {
     mobile,
     aadhaar,
     pancard,
+    pan,
     taxBenefit,
     country,
     state,
@@ -34,65 +39,70 @@ export default async function handler(req, res) {
     });
   }
 
+  const cleanPan = ((pancard || pan || "").toUpperCase().trim()) || null;
+  const cleanAadhaar = (aadhaar || "").trim() || null;
+
   const receiptId = String(receipt || (`rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`)).slice(0, 40);
 
-  let order = null;
-
-  if (key_id && key_secret) {
-    try {
-      const razorpay = new Razorpay({
-        key_id,
-        key_secret,
-      });
-
-      order = await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: currency || "INR",
-        receipt: receiptId,
-        notes: {
-          name: name || "",
-          email: email || "",
-          mobile: mobile || "",
-          taxBenefit: taxBenefit || "no",
-        },
-      });
-    } catch (apiError) {
-      console.warn("Orders API notice (proceeding with standard modal):", apiError.message || apiError.error?.description);
-    }
-  }
-
-  const orderId = order?.id || null;
-
   try {
-    await connectDB();
-    await Donation.create({
-      donorName: name || "Anonymous Donor",
-      email: email || "unknown@ekarth.org",
-      mobile: mobile || "0000000000",
-      amount: amountInPaise / 100,
-      orderId: orderId || (`test_ord_${Date.now()}`),
-      receipt: receiptId,
-      currency: currency || "INR",
-      status: "created",
-      aadhaar: aadhaar || null,
-      pancard: pancard || null,
-      taxBenefit: taxBenefit || "no",
-      country: country || "India",
-      state: state || null,
-      city: city || null,
-      address: address || null,
-      pincode: pincode || null,
+    const razorpay = new Razorpay({
+      key_id,
+      key_secret,
     });
-  } catch (dbError) {
-    console.warn("Could not save initial donation record to DB:", dbError.message);
-  }
 
-  return res.status(200).json({
-    order_id: orderId,
-    id: orderId,
-    amount: amountInPaise,
-    currency: currency || "INR",
-    receipt: receiptId,
-    key: key_id,
-  });
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: currency || "INR",
+      receipt: receiptId,
+      notes: {
+        name: name || "",
+        email: email || "",
+        mobile: mobile || "",
+        pan: cleanPan || "",
+        aadhaar: cleanAadhaar || "",
+        taxBenefit: taxBenefit || (cleanPan ? "yes" : "no"),
+      },
+    });
+
+    // Save initial donation record in MongoDB
+    try {
+      await connectDB();
+      await Donation.create({
+        donorName: name || "Anonymous Donor",
+        email: email || "unknown@ekarth.org",
+        mobile: mobile || "0000000000",
+        amount: amountInPaise / 100,
+        orderId: order.id,
+        receipt: order.receipt,
+        currency: order.currency,
+        status: "created",
+        aadhaar: cleanAadhaar,
+        pancard: cleanPan,
+        pan: cleanPan,
+        taxBenefit: taxBenefit || (cleanPan ? "yes" : "no"),
+        country: country || "India",
+        state: state || null,
+        city: city || null,
+        address: address || null,
+        pincode: pincode || null,
+      });
+    } catch (dbError) {
+      console.warn("Could not save initial donation record to DB (will retry on verification):", dbError.message);
+    }
+
+    return res.status(200).json({
+      order_id: order.id,
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      receipt: order.receipt,
+      key: key_id,
+    });
+  } catch (error) {
+    console.error("Error creating Razorpay order:", error);
+    return res.status(error.statusCode || 500).json({
+      error: "Failed to create Razorpay order",
+      details: error.error?.description || error.message || "Unknown error",
+    });
+  }
 }

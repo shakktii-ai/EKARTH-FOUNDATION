@@ -13,6 +13,7 @@ export default async function handler(req, res) {
     razorpay_signature,
     order_id,
     payment_id,
+    donorInfo,
   } = req.body;
 
   const targetOrderId = razorpay_order_id || order_id;
@@ -58,6 +59,22 @@ export default async function handler(req, res) {
   let donation = null;
   try {
     await connectDB();
+    const updatePayload = {
+      paymentId: targetPaymentId,
+      orderId: targetOrderId || ("ord_" + Date.now()),
+      signature: targetSignature || "verified_checkout",
+      status: "success",
+    };
+
+    if (donorInfo?.pancard || donorInfo?.pan) {
+      const p = (donorInfo.pancard || donorInfo.pan).toUpperCase().trim();
+      updatePayload.pancard = p;
+      updatePayload.pan = p;
+    }
+    if (donorInfo?.aadhaar) {
+      updatePayload.aadhaar = donorInfo.aadhaar.trim();
+    }
+
     donation = await Donation.findOneAndUpdate(
       {
         $or: [
@@ -66,14 +83,32 @@ export default async function handler(req, res) {
           { status: "created" }
         ].filter(Boolean)
       },
-      {
-        paymentId: targetPaymentId,
-        orderId: targetOrderId || (`ord_${Date.now()}`),
-        signature: targetSignature || "verified_checkout",
-        status: "success",
-      },
+      updatePayload,
       { new: true, sort: { createdAt: -1 } }
     );
+
+    if (!donation && donorInfo) {
+      const cleanPan = (donorInfo.pancard || donorInfo.pan || '').toUpperCase().trim() || null;
+      donation = await Donation.create({
+        donorName: donorInfo.name || "Donor",
+        email: donorInfo.email || "donor@ekarth.org",
+        mobile: donorInfo.mobile || "0000000000",
+        amount: Number(donorInfo.amount || 0) || 1,
+        orderId: targetOrderId || ("ord_" + Date.now()),
+        paymentId: targetPaymentId,
+        signature: targetSignature || "verified_checkout",
+        status: "success",
+        aadhaar: donorInfo.aadhaar || null,
+        pancard: cleanPan,
+        pan: cleanPan,
+        taxBenefit: donorInfo.taxBenefit || "yes",
+        country: donorInfo.country || "India",
+        state: donorInfo.state || null,
+        city: donorInfo.city || null,
+        address: donorInfo.address || null,
+        pincode: donorInfo.pincode || null,
+      });
+    }
   } catch (dbErr) {
     console.warn("Could not update donation in DB:", dbErr.message);
   }

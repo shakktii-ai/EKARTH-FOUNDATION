@@ -15,6 +15,7 @@ const PRESET_AMOUNTS = [
 function Donate() {
   const [selectedAmount, setSelectedAmount] = useState(1000);
   const [customAmount, setCustomAmount] = useState('');
+  const [idType, setIdType] = useState('pan'); // 'pan' | 'aadhaar'
 
   const [form, setForm] = useState({
     name: '',
@@ -22,7 +23,7 @@ function Donate() {
     mobile: '',
     aadhaar: '',
     pancard: '',
-    taxBenefit: 'no',
+    taxBenefit: 'yes',
     country: 'India',
     state: '',
     city: '',
@@ -97,20 +98,27 @@ function Donate() {
       toast.error('Please enter a valid 10-digit mobile number');
       return false;
     }
+
+    // MANDATORY ID CHECK: Aadhaar OR PAN Card is strictly required
+    if (idType === 'pan') {
+      const cleanPan = (form.pancard || '').trim().toUpperCase();
+      if (!cleanPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+        toast.error('Please enter a valid 10-digit PAN Card number (e.g. ABCDE1234F)');
+        return false;
+      }
+    } else {
+      const cleanAadhaar = (form.aadhaar || '').trim();
+      if (!cleanAadhaar || !/^\d{4}\s\d{4}\s\d{4}$/.test(cleanAadhaar)) {
+        toast.error('Please enter a valid 12-digit Aadhaar Card number (1234 5678 9012)');
+        return false;
+      }
+    }
+
     if (!form.agreeTerms) {
       toast.error('Please agree to the terms and conditions');
       return false;
     }
-    if (form.taxBenefit === 'yes') {
-      if (!form.aadhaar || !/^\d{4}\s\d{4}\s\d{4}$/.test(form.aadhaar)) {
-        toast.error('Please enter a valid Aadhaar number (1234 5678 9012)');
-        return false;
-      }
-      if (!form.pancard || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pancard)) {
-        toast.error('Please enter a valid PAN (e.g., ABCDE1234F)');
-        return false;
-      }
-    }
+
     return true;
   };
 
@@ -140,9 +148,9 @@ function Donate() {
           name: form.name,
           email: form.email,
           mobile: form.mobile,
-          aadhaar: form.aadhaar,
-          pancard: form.pancard,
-          taxBenefit: form.taxBenefit,
+          aadhaar: idType === 'aadhaar' ? form.aadhaar : (form.aadhaar || null),
+          pancard: idType === 'pan' ? form.pancard.toUpperCase().trim() : (form.pancard ? form.pancard.toUpperCase().trim() : null),
+          taxBenefit: form.taxBenefit || 'yes',
           country: form.country,
           state: form.state,
           city: form.city,
@@ -160,7 +168,7 @@ function Donate() {
       const razorpayKey =
         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
         orderData.key ||
-        'rzp_test_Tnl0IY0QBPANsf';
+        'rzp_live_TnlxKKKMW90A9P';
 
       // STEP 2: Frontend - Razorpay Standard Modal Checkout
       const options = {
@@ -169,7 +177,7 @@ function Donate() {
         currency: orderData.currency || 'INR',
         name: 'Ekarth Foundation',
         description: `One-Time Donation - \u20B9 ${donationAmount.toLocaleString('en-IN')}`,
-        ...(orderData.order_id ? { order_id: orderData.order_id } : {}),
+        order_id: orderData.order_id || orderData.id,
         prefill: {
           name: form.name,
           email: form.email,
@@ -201,7 +209,7 @@ function Donate() {
                 mobile: '',
                 aadhaar: '',
                 pancard: '',
-                taxBenefit: 'no',
+                taxBenefit: 'yes',
                 country: 'India',
                 state: '',
                 city: '',
@@ -231,7 +239,6 @@ function Donate() {
 
       const rzp = new window.Razorpay(options);
 
-      // Handle payment failure event
       rzp.on('payment.failed', function (failResponse) {
         console.error('Razorpay payment failed:', failResponse.error);
         toast.error(failResponse.error?.description || 'Payment failed. Please try again.');
@@ -358,60 +365,80 @@ function Donate() {
             </div>
 
             <form className="space-y-3" onSubmit={handleDonate}>
-              {/* 80G Tax Benefit Section */}
-              <div className="mb-4">
-                <p className="text-center font-semibold text-sm mb-2 text-gray-800">
-                  Do you want to avail 80G tax benefit?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, taxBenefit: 'yes' })}
-                    className={`py-2.5 rounded-xl font-semibold text-sm transition ${
-                      form.taxBenefit === 'yes'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                    }`}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, taxBenefit: 'no' })}
-                    className={`py-2.5 rounded-xl font-semibold text-sm transition ${
-                      form.taxBenefit === 'no'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                    }`}
-                  >
-                    No
-                  </button>
+              {/* Mandatory Government ID Proof (Aadhaar or PAN) */}
+              <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                    <span>Identity Proof (Required) *</span>
+                  </label>
+                  <span className="text-[11px] text-emerald-700 font-bold bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+                    80G Compliance
+                  </span>
                 </div>
-              </div>
+                
+                {/* ID Type Selector Tabs */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setIdType('pan')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      idType === 'pan'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <span>PAN Card</span>
+                    {form.pancard ? <span className="w-1.5 h-1.5 rounded-full bg-white" /> : null}
+                  </button>
 
-              {form.taxBenefit === 'yes' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    name="aadhaar"
-                    placeholder="Aadhaar No (1234 5678 9012)"
-                    value={form.aadhaar}
-                    onChange={handleAadhaarInput}
-                    className="border border-emerald-300 rounded-xl px-4 py-2 text-sm bg-emerald-50/50 focus:outline-none focus:border-emerald-500"
-                    maxLength={14}
-                    title="Format: 1234 5678 9012"
-                  />
-                  <input
-                    type="text"
-                    name="pancard"
-                    placeholder="PAN Card (e.g. ABCDE1234F)"
-                    value={form.pancard}
-                    onChange={handleInputChange}
-                    className="border border-emerald-300 rounded-xl px-4 py-2 text-sm bg-emerald-50/50 uppercase focus:outline-none focus:border-emerald-500"
-                    maxLength={10}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setIdType('aadhaar')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      idType === 'aadhaar'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <span>Aadhaar Card</span>
+                    {form.aadhaar ? <span className="w-1.5 h-1.5 rounded-full bg-white" /> : null}
+                  </button>
                 </div>
-              )}
+
+                {idType === 'pan' ? (
+                  <div>
+                    <input
+                      type="text"
+                      name="pancard"
+                      placeholder="Enter PAN Card (e.g. ABCDE1234F) *"
+                      value={form.pancard}
+                      onChange={handleInputChange}
+                      maxLength={10}
+                      className="w-full border border-emerald-300 rounded-xl px-4 py-2.5 text-sm bg-white uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-wider"
+                      required
+                    />
+                    <p className="text-[11px] text-emerald-800 mt-1">
+                      Required for 80G tax benefit receipt under Government Form 10BD.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      name="aadhaar"
+                      placeholder="Enter 12-digit Aadhaar (1234 5678 9012) *"
+                      value={form.aadhaar}
+                      onChange={handleAadhaarInput}
+                      maxLength={14}
+                      className="w-full border border-emerald-300 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-wider"
+                      required
+                    />
+                    <p className="text-[11px] text-emerald-800 mt-1">
+                      Your Aadhaar number is securely recorded for official non-profit donation compliance.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* Donor Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -421,7 +448,7 @@ function Donate() {
                   placeholder="Full Name *"
                   value={form.name}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                   required
                 />
                 <input
@@ -430,7 +457,7 @@ function Donate() {
                   placeholder="Email ID *"
                   value={form.email}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                   required
                 />
               </div>
@@ -442,7 +469,7 @@ function Donate() {
                   placeholder="10-digit Mobile Number *"
                   value={form.mobile}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                   maxLength={10}
                   required
                 />
@@ -452,7 +479,7 @@ function Donate() {
                   placeholder="Country"
                   value={form.country}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-gray-50"
                   readOnly
                 />
               </div>
@@ -464,7 +491,7 @@ function Donate() {
                   placeholder="State"
                   value={form.state}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                 />
                 <input
                   type="text"
@@ -472,7 +499,7 @@ function Donate() {
                   placeholder="City"
                   value={form.city}
                   onChange={handleInputChange}
-                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                 />
               </div>
 
@@ -482,7 +509,7 @@ function Donate() {
                 placeholder="Address (Optional)"
                 value={form.address}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
               />
 
               <input
@@ -491,7 +518,7 @@ function Donate() {
                 placeholder="Pincode"
                 value={form.pincode}
                 onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-500"
                 maxLength={6}
               />
 
@@ -505,7 +532,7 @@ function Donate() {
                   name="agreeTerms"
                   checked={form.agreeTerms}
                   onChange={handleInputChange}
-                  className="mt-0.5 mr-2 rounded text-green-600 focus:ring-green-500"
+                  className="mt-0.5 mr-2 rounded text-green-600 focus:ring-green-500 cursor-pointer"
                   required
                 />
                 <span>
@@ -516,7 +543,7 @@ function Donate() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-green-700 transition shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-green-600 text-white py-3.5 rounded-xl font-bold mt-4 hover:bg-green-700 transition shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
