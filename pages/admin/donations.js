@@ -46,6 +46,7 @@ function AdminDonations() {
           d.donorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           d.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           d.mobile?.includes(searchTerm) ||
+          d.orderId?.includes(searchTerm) ||
           d.subscriptionId?.includes(searchTerm) ||
           d.paymentId?.includes(searchTerm)
       );
@@ -261,6 +262,11 @@ function AdminDonations() {
                       <td className="px-4 py-4">{getStatusBadge(d.status)}</td>
                       <td className="px-4 py-4">
                         <div className="text-xs text-gray-600">
+                          {d.orderId && (
+                            <p className="mb-1 font-mono">
+                              <span className="font-medium">Order:</span> {d.orderId}
+                            </p>
+                          )}
                           {d.subscriptionId && (
                             <p className="mb-1">
                               <span className="font-medium">Sub:</span>{" "}

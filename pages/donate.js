@@ -3,49 +3,46 @@ import Head from 'next/head';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-function Donate() {
-  const subscriptionPlans = [
-    { id: 'plan_RbMyBIQYgYIcaz', name: 'plan_100c', amount: 100 },
-    { id: 'plan_RbMyjy2pXKxJOQ', name: 'plan_200c', amount: 200 },
-    { id: 'plan_RbMyz33zvUy88L', name: 'plan_300c', amount: 300 },
-    { id: 'plan_RbMzD1taHhJJHh', name: 'plan_500c', amount: 500 },
-    { id: 'plan_RbMz0v1qJYspEc', name: 'plan_700c', amount: 700 },
-    { id: 'plan_RbMzc8pI5GeYXZ', name: 'plan_1000c', amount: 1000 },
-    { id: 'plan_RbMzqLgPsJKMwQ', name: 'plan_1500c', amount: 1500 },
-    { id: 'plan_RbN0B2uyfFMDci', name: 'plan_2000c', amount: 2000 },
-    { id: 'plan_RbN0Lvx2qeqDaM', name: 'plan_3000c', amount: 3000 },
-    { id: 'plan_RbN0WxNjTP2bM4', name: 'plan_5000c', amount: 5000 },
-    { id: 'plan_RbN01qkGYt239B', name: 'plan_10000c', amount: 10000 },
-    { id: 'plan_RbN0WwuNPzTcoIh', name: 'plan_15000c', amount: 15000 },
-  ];
+const PRESET_AMOUNTS = [
+  { id: 'amt_500', amount: 500, label: '\u20B9 500' },
+  { id: 'amt_1000', amount: 1000, label: '\u20B9 1,000' },
+  { id: 'amt_2000', amount: 2000, label: '\u20B9 2,000' },
+  { id: 'amt_3000', amount: 3000, label: '\u20B9 3,000' },
+  { id: 'amt_5000', amount: 5000, label: '\u20B9 5,000' },
+  { id: 'amt_10000', amount: 10000, label: '\u20B9 10,000' },
+];
 
-  const [selectedPlan, setSelectedPlan] = useState(null);
+function Donate() {
+  const [selectedAmount, setSelectedAmount] = useState(1000);
+  const [customAmount, setCustomAmount] = useState('');
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    aadhaar: "",
-    pancard: "",
-    taxBenefit: "",
-    country: "India",
-    state: "",
-    city: "",
-    address: "",
-    pincode: "",
+    name: '',
+    email: '',
+    mobile: '',
+    aadhaar: '',
+    pancard: '',
+    taxBenefit: 'no',
+    country: 'India',
+    state: '',
+    city: '',
+    address: '',
+    pincode: '',
     agreeTerms: false,
   });
 
   const [loading, setLoading] = useState(false);
 
+  // Load Razorpay Standard Checkout SDK
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
+    const scriptId = 'razorpay-checkout-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
   }, []);
 
   const handleInputChange = (e) => {
@@ -57,40 +54,60 @@ function Donate() {
   };
 
   const handleAadhaarInput = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
-    if (value.length > 12) value = value.slice(0, 12); // Limit to 12 digits
-
-    const formattedValue = value.match(/.{1,4}/g)?.join(" ") || ""; // Group xxx xxxx xxxx
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 12) value = value.slice(0, 12);
+    const formattedValue = value.match(/.{1,4}/g)?.join(' ') || '';
     setForm((prev) => ({
       ...prev,
       aadhaar: formattedValue,
     }));
   };
 
-  const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan);
+  const handleAmountSelect = (amt) => {
+    setSelectedAmount(amt);
+    setCustomAmount('');
+  };
+
+  const handleCustomAmountChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    setCustomAmount(val);
+    if (val) {
+      setSelectedAmount(Number(val));
+    }
+  };
+
+  const getEffectiveAmount = () => {
+    if (customAmount && Number(customAmount) > 0) {
+      return Number(customAmount);
+    }
+    return selectedAmount || 0;
   };
 
   const validateForm = () => {
-    if (!selectedPlan) {
-      toast.error("Please select a donation amount");
+    const amount = getEffectiveAmount();
+    if (!amount || amount < 1) {
+      toast.error('Please select or enter a valid donation amount (minimum \u20B9 1)');
       return false;
     }
     if (!form.name || !form.email || !form.mobile) {
-      toast.error("Please fill in all required fields");
+      toast.error('Please fill in all required fields (Name, Email, Mobile)');
+      return false;
+    }
+    if (!/^\d{10}$/.test(form.mobile.trim())) {
+      toast.error('Please enter a valid 10-digit mobile number');
       return false;
     }
     if (!form.agreeTerms) {
-      toast.error("Please agree to the terms and conditions");
+      toast.error('Please agree to the terms and conditions');
       return false;
     }
-    if (form.taxBenefit === "yes") {
+    if (form.taxBenefit === 'yes') {
       if (!form.aadhaar || !/^\d{4}\s\d{4}\s\d{4}$/.test(form.aadhaar)) {
-        toast.error("Please enter a valid Aadhaar number (1234 5678 9012)");
+        toast.error('Please enter a valid Aadhaar number (1234 5678 9012)');
         return false;
       }
       if (!form.pancard || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pancard)) {
-        toast.error("Please enter a valid PAN (e.g., ABCDE1234F)");
+        toast.error('Please enter a valid PAN (e.g., ABCDE1234F)');
         return false;
       }
     }
@@ -101,93 +118,146 @@ function Donate() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    if (typeof window === 'undefined' || !window.Razorpay) {
+      toast.error('Razorpay SDK is loading. Please try again in a few seconds.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const donationData = {
-        ...form,
-        amount: selectedPlan ? selectedPlan.amount : null,
-      };
+      const donationAmount = getEffectiveAmount();
+      const amountInPaise = Math.round(donationAmount * 100);
 
-      const res = await fetch("/api/razorpay/create-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(donationData),
+      // STEP 1: Backend - Create Order
+      const res = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: 'INR',
+          receipt: `rcpt_${Date.now()}`,
+          name: form.name,
+          email: form.email,
+          mobile: form.mobile,
+          aadhaar: form.aadhaar,
+          pancard: form.pancard,
+          taxBenefit: form.taxBenefit,
+          country: form.country,
+          state: form.state,
+          city: form.city,
+          address: form.address,
+          pincode: form.pincode,
+        }),
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create subscription');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || 'Failed to initiate donation order');
       }
 
-      const data = await res.json();
+      const orderData = await res.json();
+      const razorpayKey =
+        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
+        orderData.key ||
+        'rzp_test_Tnl0IY0QBPANsf';
 
+      // STEP 2: Frontend - Razorpay Standard Modal Checkout
       const options = {
-        key: data.key,
-        subscription_id: data.subscription_id,
-        name: "Ekarth Foundation",
-        description: "Monthly Donation - Supporting Education & Healthcare",
+        key: razorpayKey,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Ekarth Foundation',
+        description: `One-Time Donation - \u20B9 ${donationAmount.toLocaleString('en-IN')}`,
+        order_id: orderData.order_id || orderData.id,
         prefill: {
           name: form.name,
           email: form.email,
           contact: form.mobile,
         },
+        theme: {
+          color: '#22c55e',
+        },
+        // STEP 3: Backend - Verify Signature
         handler: async function (response) {
           try {
-            await fetch("/api/razorpay/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_subscription_id: response.razorpay_subscription_id,
+                razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
               }),
             });
-          } catch (error) {
-            console.error("Error verifying payment:", error);
-          }
 
-          toast.success("🎉 Donation started successfully! Thank you for supporting Ekarth Foundation!");
-
-          setForm({
-            name: "",
-            email: "",
-            mobile: "",
-            aadhaar: "",
-            pancard: "",
-            taxBenefit: "",
-            country: "India",
-            state: "",
-            city: "",
-            address: "",
-            pincode: "",
-            agreeTerms: false,
-          });
-          setSelectedPlan(null);
-        },
-        modal: {
-          ondismiss: function () {
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              toast.success('Donation successful! Thank you for supporting Ekarth Foundation!');
+              // Reset form
+              setForm({
+                name: '',
+                email: '',
+                mobile: '',
+                aadhaar: '',
+                pancard: '',
+                taxBenefit: 'no',
+                country: 'India',
+                state: '',
+                city: '',
+                address: '',
+                pincode: '',
+                agreeTerms: false,
+              });
+              setCustomAmount('');
+              setSelectedAmount(1000);
+            } else {
+              toast.error(verifyData.error || 'Payment verification failed. Please contact support.');
+            }
+          } catch (verifyError) {
+            console.error('Error verifying payment:', verifyError);
+            toast.error('Network error during payment verification.');
+          } finally {
             setLoading(false);
           }
         },
-        theme: { color: "#2d6a4f" },
+        modal: {
+          ondismiss: function () {
+            toast.info('Payment cancelled.');
+            setLoading(false);
+          },
+        },
       };
 
       const rzp = new window.Razorpay(options);
+
+      // Handle payment failure event
+      rzp.on('payment.failed', function (failResponse) {
+        console.error('Razorpay payment failed:', failResponse.error);
+        toast.error(failResponse.error?.description || 'Payment failed. Please try again.');
+        setLoading(false);
+      });
+
       rzp.open();
-      setLoading(false);
     } catch (error) {
-      console.error("Error creating subscription:", error);
-      toast.error("Failed to process donation. Please try again.");
+      console.error('Error starting checkout:', error);
+      toast.error(error.message || 'Failed to start donation. Please try again.');
       setLoading(false);
     }
   };
+
+  const effectiveAmount = getEffectiveAmount();
 
   return (
     <>
       <Head>
         <title>Donate | Ekarth Foundation</title>
-        <meta name="description" content="Support education scholarships and community welfare with Ekarth Foundation. 80G Tax Benefit eligible." />
+        <meta
+          name="description"
+          content="Support education scholarships and community welfare with Ekarth Foundation. 80G Tax Benefit eligible."
+        />
       </Head>
+
       <section className="min-h-[20rem] pt-20 font-manrope font-light bg-[#f8fced] flex items-center justify-center px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10 text-center md:text-left">
           <div className="flex-1">
@@ -197,9 +267,7 @@ function Donate() {
           </div>
           <div className="flex-1 text-gray-700 text-base md:text-lg leading-relaxed max-w-lg">
             <p>
-              We believe in the power of collective effort to bring hope,
-              change, and educational opportunity to students in need. Join us as we work to
-              create a brighter future for all.
+              We believe in the power of collective effort to bring hope, change, and educational opportunity to students in need. Join us as we work to create a brighter future for all.
             </p>
           </div>
         </div>
@@ -207,14 +275,14 @@ function Donate() {
 
       <section className="bg-white py-16 px-6 md:px-16">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-10">
-          {/* Left Side */}
-          <div className='font-manrope font-light'>
-            <h2 className="text-2xl md:text-3xl font-manrope font-light font-bold mb-6 text-black uppercase">
-              Empower a Child&apos;s Education & Future
+          {/* Left Side: Impact Story */}
+          <div className="font-manrope font-light">
+            <h2 className="text-2xl md:text-3xl font-manrope font-bold mb-6 text-black uppercase">
+              Empower a Child&apos;s Education &amp; Future
             </h2>
 
             <p className="text-gray-700 mb-4 leading-relaxed">
-              Education is every child&apos;s fundamental right — it is the single most powerful tool to break the cycle of poverty and unlock human potential. Yet, across Maharashtra and India, thousands of deserving students face the risk of dropping out simply due to unmanageable school fees, exam charges, or lack of learning essentials.
+              Education is every child&apos;s fundamental right &mdash; it is the single most powerful tool to break the cycle of poverty and unlock human potential. Yet, across Maharashtra and India, thousands of deserving students face the risk of dropping out simply due to unmanageable school fees, exam charges, or lack of learning essentials.
             </p>
 
             <p className="text-gray-700 mb-4 leading-relaxed">
@@ -222,11 +290,11 @@ function Donate() {
             </p>
 
             <p className="text-gray-700 mb-4 leading-relaxed">
-              Every contribution you make helps a child stay in school — funding up to ₹5,000 in school fees, providing textbooks and notebooks, or delivering essential healthcare support that brings relief and stability to struggling households.
+              Every contribution you make helps a child stay in school &mdash; funding up to &#8377; 5,000 in school fees, providing textbooks and notebooks, or delivering essential healthcare support that brings relief and stability to struggling households.
             </p>
 
             <p className="text-gray-700 mb-4 leading-relaxed">
-              Our initiatives are not just charity — they are investments in young minds, dignity, and nation-building. With your support, we can expand our reach across schools and colleges in Pune and beyond.
+              Our initiatives are not just charity &mdash; they are investments in young minds, dignity, and nation-building. With your support, we can expand our reach across schools and colleges in Pune and beyond.
             </p>
 
             <p className="text-gray-700 leading-relaxed">
@@ -234,74 +302,86 @@ function Donate() {
             </p>
           </div>
 
-          {/* Right Side Form */}
-          <div className="border border-green-500 rounded-lg p-6 md:p-8 shadow-md">
-            <h3 className="text-xl font-bold text-center mb-4 uppercase">
+          {/* Right Side: Donation Form */}
+          <div className="border border-green-500 rounded-2xl p-6 md:p-8 shadow-md bg-white">
+            <h3 className="text-xl font-bold text-center mb-1 uppercase text-gray-900">
               Support the Cause
             </h3>
 
-            <p className="text-center text-gray-700 mb-4 uppercase">
-              Make a Difference
+            <p className="text-center text-sm font-semibold text-emerald-700 mb-5 uppercase tracking-wider">
+              One-Time Contribution
             </p>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {subscriptionPlans.map((plan) => (
-                <label
-                  key={plan.id}
-                  className={`border px-3 py-2 rounded-full cursor-pointer text-center text-sm ${
-                    selectedPlan?.id === plan.id
-                      ? "bg-green-500 text-white"
-                      : "border-gray-400 hover:border-green-500"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="amount"
-                    value={plan.amount}
-                    className="hidden"
-                    onChange={() => handlePlanSelect(plan)}
-                    checked={selectedPlan?.id === plan.id}
-                  />
-                  ₹ {plan.amount.toLocaleString('en-IN')}
-                </label>
-              ))}
+            {/* Amount Selection Buttons */}
+            <div className="grid grid-cols-3 gap-2.5 mb-4">
+              {PRESET_AMOUNTS.map((preset) => {
+                const isSelected = selectedAmount === preset.amount && !customAmount;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleAmountSelect(preset.amount)}
+                    className={`py-2.5 px-3 rounded-xl border text-sm font-bold transition-all ${
+                      isSelected
+                        ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                        : 'border-gray-300 text-gray-800 hover:border-green-500 hover:bg-green-50'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <p className="text-center text-sm text-blue-800 font-medium">
-                📅 Monthly Subscription - 60 Months (5 Years)
-              </p>
-              <p className="text-center text-xs text-blue-600 mt-1">
-                Your selected amount will be charged monthly for 60 months
-              </p>
+            {/* Custom Amount Field */}
+            <div className="mb-5">
+              <div className="relative">
+                <span className="absolute left-4 top-2.5 text-gray-500 font-bold">&#8377;</span>
+                <input
+                  type="text"
+                  placeholder="Or enter custom amount in INR"
+                  value={customAmount}
+                  onChange={handleCustomAmountChange}
+                  className="w-full border border-gray-300 rounded-xl pl-8 pr-4 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                />
+              </div>
             </div>
 
-            <p className="text-center text-sm text-gray-600 mb-4">
-              Your donation directly funds scholarships, educational kits, and skill workshops for deserving students.
-            </p>
+            {/* Trust and Summary Badge */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-5 flex items-center justify-between text-xs text-emerald-900">
+              <span className="font-semibold">
+                Contributing: <strong className="text-sm font-extrabold text-emerald-700">&#8377; {effectiveAmount.toLocaleString('en-IN')}</strong>
+              </span>
+              <span className="text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 font-medium">
+                Standard One-Time Checkout
+              </span>
+            </div>
 
             <form className="space-y-3" onSubmit={handleDonate}>
+              {/* 80G Tax Benefit Section */}
               <div className="mb-4">
-                <p className="text-center font-semibold mb-3">Do you want to avail 80G tax benefit?</p>
+                <p className="text-center font-semibold text-sm mb-2 text-gray-800">
+                  Do you want to avail 80G tax benefit?
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, taxBenefit: "yes" })}
-                    className={`py-3 rounded-full font-semibold transition ${
-                      form.taxBenefit === "yes"
-                        ? "bg-emerald-500 text-white"
-                        : "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                    onClick={() => setForm({ ...form, taxBenefit: 'yes' })}
+                    className={`py-2.5 rounded-xl font-semibold text-sm transition ${
+                      form.taxBenefit === 'yes'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
                     }`}
                   >
                     Yes
                   </button>
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, taxBenefit: "no" })}
-                    className={`py-3 rounded-full font-semibold transition ${
-                      form.taxBenefit === "no"
-                        ? "bg-emerald-500 text-white"
-                        : "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                    onClick={() => setForm({ ...form, taxBenefit: 'no' })}
+                    className={`py-2.5 rounded-xl font-semibold text-sm transition ${
+                      form.taxBenefit === 'no'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
                     }`}
                   >
                     No
@@ -309,61 +389,61 @@ function Donate() {
                 </div>
               </div>
 
-              {form.taxBenefit === "yes" && (
-                <div className="grid grid-cols-2 gap-3">
+              {form.taxBenefit === 'yes' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     name="aadhaar"
-                    placeholder="Enter Aadhaar No"
+                    placeholder="Aadhaar No (1234 5678 9012)"
                     value={form.aadhaar}
                     onChange={handleAadhaarInput}
-                    className="border rounded-full px-4 py-2 bg-emerald-50"
+                    className="border border-emerald-300 rounded-xl px-4 py-2 text-sm bg-emerald-50/50 focus:outline-none focus:border-emerald-500"
                     maxLength={14}
-                    pattern="^(\d{4}\s\d{4}\s\d{4})$"
                     title="Format: 1234 5678 9012"
                   />
                   <input
                     type="text"
                     name="pancard"
-                    placeholder="Enter Pancard No"
+                    placeholder="PAN Card (e.g. ABCDE1234F)"
                     value={form.pancard}
                     onChange={handleInputChange}
-                    className="border rounded-full px-4 py-2 bg-emerald-50"
-                    pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
+                    className="border border-emerald-300 rounded-xl px-4 py-2 text-sm bg-emerald-50/50 uppercase focus:outline-none focus:border-emerald-500"
+                    maxLength={10}
                   />
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Donor Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
                   name="name"
-                  placeholder="Enter Full Name *"
+                  placeholder="Full Name *"
                   value={form.name}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
                   required
                 />
                 <input
                   type="email"
                   name="email"
-                  placeholder="Enter Email ID *"
+                  placeholder="Email ID *"
                   value={form.email}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="tel"
                   name="mobile"
-                  placeholder="Enter Mobile No *"
+                  placeholder="10-digit Mobile Number *"
                   value={form.mobile}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
-                  pattern="[0-9]{10}"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                  maxLength={10}
                   required
                 />
                 <input
@@ -372,19 +452,19 @@ function Donate() {
                   placeholder="Country"
                   value={form.country}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50"
                   readOnly
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
                   name="state"
-                  placeholder="Select State"
+                  placeholder="State"
                   value={form.state}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
                 />
                 <input
                   type="text"
@@ -392,17 +472,17 @@ function Donate() {
                   placeholder="City"
                   value={form.city}
                   onChange={handleInputChange}
-                  className="border rounded-full px-4 py-2"
+                  className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
                 />
               </div>
 
               <input
                 type="text"
                 name="address"
-                placeholder="Address"
+                placeholder="Address (Optional)"
                 value={form.address}
                 onChange={handleInputChange}
-                className="w-full border rounded-full px-4 py-2"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
               />
 
               <input
@@ -411,36 +491,47 @@ function Donate() {
                 placeholder="Pincode"
                 value={form.pincode}
                 onChange={handleInputChange}
-                className="w-full border rounded-full px-4 py-2"
-                pattern="[0-9]{6}"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500"
+                maxLength={6}
               />
 
-              <p className="text-xs text-gray-600 mt-4">
-                *Your contributions are eligible for tax benefits under Section 80G & 12A of the Income Tax Act as Ekarth Foundation is registered as a non-profit organization (CIN: U88900PN2025NPL246146).
+              <p className="text-[11px] text-gray-500 mt-3 leading-relaxed">
+                *Your contributions are eligible for tax benefits under Section 80G &amp; 12A of the Income Tax Act as Ekarth Foundation is registered as a non-profit organization (CIN: U88900PN2025NPL246146).
               </p>
 
-              <label className="flex items-start text-xs text-gray-600 mt-2">
+              <label className="flex items-start text-xs text-gray-600 mt-2 cursor-pointer">
                 <input
                   type="checkbox"
                   name="agreeTerms"
                   checked={form.agreeTerms}
                   onChange={handleInputChange}
-                  className="mt-1 mr-2"
+                  className="mt-0.5 mr-2 rounded text-green-600 focus:ring-green-500"
                   required
                 />
-                You agree that Ekarth Foundation can reach out to you
-                through WhatsApp/email/SMS/Phone to provide information on your
-                donation, initiatives, & 80G tax receipt. *
+                <span>
+                  You agree that Ekarth Foundation can reach out to you through WhatsApp/email/SMS/Phone to provide donation updates and 80G tax receipt. *
+                </span>
               </label>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-500 text-white py-2 rounded-full font-semibold mt-3 hover:bg-green-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-green-700 transition shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
-                {loading ? "Processing..." : "Donate Now"}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>Opening Payment Gateway...</span>
+                  </>
+                ) : (
+                  <span>Donate &#8377; {effectiveAmount.toLocaleString('en-IN')} Now</span>
+                )}
               </button>
             </form>
+
             <ToastContainer position="top-right" autoClose={3000} />
           </div>
         </div>
